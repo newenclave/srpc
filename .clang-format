@@ -1,0 +1,31 @@
+Language: Cpp
+BasedOnStyle: WebKit
+NamespaceIndentation: Inner
+ColumnLimit: 80
+UseTab: Never
+TabWidth: 4
+IndentWidth: 4
+#ContinuationIndentWidth: 3
+CompactNamespaces: true
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: true
+SpaceAfterTemplateKeyword: true
+ReflowComments: true
+AccessModifierOffset: -4
+MaxEmptyLinesToKeep: 2
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: false
+    AfterStruct: false
+    AfterUnion: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: true
+    BeforeCatch: true
+    BeforeElse: false
+    SplitEmptyFunction: true
+    SplitEmptyRecord: true
+    SplitEmptyNamespace: true
