@@ -67,18 +67,31 @@ namespace srpc { namespace common {
 		service_executor executor_;
 	};
 
-	template <typename MessageType>
-	class connection_info: public std::enable_shared_from_this<connection_info<MessageType> > {
+	template <typename MessageType, typename ServiceExecutor>
+	class connection_info: 
+		public std::enable_shared_from_this<
+			connection_info<
+				MessageType, 
+				ServiceExecutor
+			> > {
 	public:
 		using message_type = MessageType;
+		using service_executor = ServiceExecutor;
+		using this_type = connection_info<message_type, service_executor>;
 		template <typename T, typename ...Args>
 		static 
-		std::shared_ptr<connection_info<message_type> > create(Args&...args) {
+		std::shared_ptr<this_type> create(Args&...args) {
 			static_assert(std::is_base_of<connection_info, T>::value, 
 				"T is not delivered from 'srpc::common::connection_info'");
 			auto info = std::make_shared<T>(std::forward<Args>(args)...);
+			using executor_layer_type = executor_layer<message_type, service_executor>;
+			info->protocol_.create_back<executor_layer_type>();
 			return info;
 		}
+
+		virtual std::string name() const = 0;
+		virtual std::uintptr_t handle() const = 0;
+
 	protected:
 		virtual ~connection_info() = default;
 	private:
@@ -87,9 +100,23 @@ namespace srpc { namespace common {
 
 }}
 
+using namespace srpc::common;
+
 int main() 
 {
-	class ci: public srpc::common::connection_info<int> {};
-	auto cisp = srpc::common::connection_info<int>::create<ci>();
+	struct executor {
+		void make_call(int) {}
+	};
+	class connection: public connection_info<int, executor> {
+		std::string name() const override 
+		{
+			return "int runner";
+		}
+		std::uintptr_t handle() const override 
+		{
+			return 0;
+		}
+	};
+	auto ci = connection::create<connection>();
 	return 0;
 }
