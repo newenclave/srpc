@@ -11,10 +11,6 @@ namespace srpc { namespace common {
         using message_type = MessageType;
 
         executor_layer() = default;
-        //executor_layer(layer<MessageType>* lower_layers)
-        //{
-        //    set_lower(lower_layers);
-        //}
 
         service_executor& get_executor_layer()
         {

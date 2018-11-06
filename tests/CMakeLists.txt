@@ -3,8 +3,10 @@ aux_source_directory(. src_dir)
 
 set(exe_name srpc_test)
 
-add_executable(${exe_name} ${src_dir})
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
+add_executable(${exe_name} ${src_dir})
 
 target_link_libraries(${exe_name} ${Protobuf_LIBRARIES})
 
