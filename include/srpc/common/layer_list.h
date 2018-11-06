@@ -9,6 +9,7 @@ class layer_list
     : public layer<MsgType, traits::raw_pointer, traits::raw_pointer> {
 public:
     using message_type = MsgType;
+	using super_type = layer<MsgType, traits::raw_pointer, traits::raw_pointer>;
     using layer_type = layer<MsgType>;
     using upper_pointer_type = typename layer_type::upper_pointer_type;
     using lower_pointer_type = typename layer_type::lower_pointer_type;
@@ -97,7 +98,7 @@ public:
         if (upper_ptr) {
             upper_ptr->set_upper(ptr);
         }
-        layer::set_upper(ptr);
+        super_type::set_upper(ptr);
     }
 
     void set_lower(lower_pointer_type ptr) override
@@ -106,7 +107,7 @@ public:
         if (lower_ptr) {
             lower_ptr->set_lower(ptr);
         }
-        layer::set_lower(ptr);
+        super_type::set_lower(ptr);
     }
 
 private:
