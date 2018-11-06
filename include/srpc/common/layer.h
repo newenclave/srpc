@@ -136,12 +136,12 @@ protected:
         return !lower_traits::is_empty(lower_);
     }
 
-    upper_pointer_type &get_upper()
+    upper_pointer_type& get_upper()
     {
-       return upper_;
+        return upper_;
     }
 
-    lower_pointer_type &get_lower()
+    lower_pointer_type& get_lower()
     {
         return lower_;
     }
