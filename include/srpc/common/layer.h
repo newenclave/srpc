@@ -100,12 +100,12 @@ public:
         lower_traits::swap(lower_, other.lower_);
     }
 
-    void set_upper(upper_pointer_type upper)
+    virtual void set_upper(upper_pointer_type upper)
     {
         std::swap(upper_, upper);
     }
 
-    void set_lower(lower_pointer_type lower)
+    virtual void set_lower(lower_pointer_type lower)
     {
         std::swap(lower_, lower);
     }
@@ -136,6 +136,16 @@ protected:
         return !lower_traits::is_empty(lower_);
     }
 
+    upper_pointer_type &get_upper()
+    {
+       return upper_;
+    }
+
+    lower_pointer_type &get_lower()
+    {
+        return lower_;
+    }
+
 private:
     upper_pointer_type upper_ = nullptr;
     lower_pointer_type lower_ = nullptr;
@@ -155,7 +165,7 @@ public:
     using upper_pointer_type = super_type::upper_pointer_type;
     using lower_pointer_type = super_type::lower_pointer_type;
 
-private:
+public:
     void from_upper(message_type msg) override // from upper layer
     {
         this->send_to_lower(std::move(msg));

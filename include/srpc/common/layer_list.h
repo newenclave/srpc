@@ -10,6 +10,8 @@ class layer_list
 public:
     using message_type = MsgType;
     using layer_type = layer<MsgType>;
+	using upper_pointer_type = layer_type::upper_pointer_type;
+	using lower_pointer_type = layer_type::lower_pointer_type;
     using layer_uptr = std::unique_ptr<layer_type>;
     using iterator = typename std::list<layer_uptr>::iterator;
     using const_iterator = typename std::list<layer_uptr>::const_iterator;
@@ -47,7 +49,7 @@ public:
 
     void push_front(layer_uptr new_value)
     {
-        layer_type* old = list_.empty() ? nullptr : list_.front().get();
+        layer_type* old = list_.empty() ? get_lower() : list_.front().get();
         new_value->set_lower(old);
         if (old) {
             old->set_upper(new_value.get());
@@ -64,7 +66,7 @@ public:
 
     void push_back(layer_uptr new_value)
     {
-        layer_type* old = list_.empty() ? nullptr : list_.back().get();
+        layer_type* old = list_.empty() ? get_upper() : list_.back().get();
         new_value->set_upper(old);
         if (old) {
             old->set_lower(new_value.get());
@@ -87,6 +89,24 @@ public:
     std::size_t empty() const
     {
         return list_.empty();
+    }
+
+    void set_upper(upper_pointer_type ptr) override 
+    {
+        auto upper_ptr = list_.empty() ? nullptr : list_.front().get();
+        if(upper_ptr) {
+            upper_ptr->set_upper(ptr);
+        }
+        layer::set_upper(ptr);
+    }
+
+    void set_lower(lower_pointer_type ptr) override 
+    {
+        auto lower_ptr = list_.empty() ? nullptr : list_.back().get();
+        if(lower_ptr) {
+            lower_ptr->set_lower(ptr);
+        }
+        layer::set_lower(ptr);
     }
 
 private:
