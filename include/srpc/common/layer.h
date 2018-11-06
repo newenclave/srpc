@@ -163,9 +163,9 @@ class pass_through_layer : public layer<MsgType, UpperPtrTrait, LowerPtrTrait> {
     using super_type = layer<MsgType, upper_traits, lower_traits>;
 
 public:
-    using message_type = super_type::message_type;
-    using upper_pointer_type = super_type::upper_pointer_type;
-    using lower_pointer_type = super_type::lower_pointer_type;
+    using message_type = typename super_type::message_type;
+    using upper_pointer_type = typename super_type::upper_pointer_type;
+    using lower_pointer_type = typename super_type::lower_pointer_type;
 
 public:
     void from_upper(message_type msg) override // from upper layer
