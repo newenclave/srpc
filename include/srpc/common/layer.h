@@ -153,8 +153,10 @@ namespace srpc { namespace common {
         lower_pointer_type lower_ = nullptr;
     };
 
-    template <typename MsgType, typename UpperPtrTrait = traits::raw_pointer,
-              typename LowerPtrTrait = UpperPtrTrait>
+    template <typename MsgType, 
+              typename UpperPtrTrait = traits::raw_pointer,
+              typename LowerPtrTrait = UpperPtrTrait
+    >
     class pass_through_layer
         : public layer<MsgType, UpperPtrTrait, LowerPtrTrait> {
 
