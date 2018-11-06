@@ -1,6 +1,6 @@
+#include "srpc/common/executor_layer.h"
 #include "srpc/common/layer.h"
 #include "srpc/common/layer_list.h"
-#include "srpc/common/executor_layer.h"
 
 #include <iostream>
 #include <thread>
@@ -58,6 +58,12 @@ namespace srpc { namespace common {
 using namespace srpc::common;
 
 struct message {
+    message(int c, std::string cmd, std::string dat)
+        : code(c)
+        , command(std::move(cmd))
+        , data(std::move(dat))
+    {
+    }
     int code = 0;
     std::string command;
     std::string data;
@@ -74,11 +80,11 @@ public:
         std::cout << "c: " << msg.command << "\n";
         std::cout << "d: " << msg.data << "\n";
         if (msg.command == "-") {
-            cnt_->get_executor_layer().from_upper(message{ -1, "-", "failed" });
+            cnt_->get_executor_layer().from_upper(message( -1, "-", "failed" ));
         } else if (msg.command == "q") {
             // cnt_->stop();
         } else {
-            cnt_->get_executor_layer().from_upper(message{ 0, "+", "" });
+            cnt_->get_executor_layer().from_upper(message( 0, "+", "" ));
         }
     }
 
@@ -175,7 +181,7 @@ int main()
         while (true) {
             std::string command;
             std::getline(std::cin, command);
-            con.get_protocol_layer().from_lower(message{ 0, "", command });
+            con.get_protocol_layer().from_lower(message( 0, "", command ));
         }
     });
 
