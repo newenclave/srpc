@@ -14,24 +14,6 @@ namespace srpc { namespace client {
 
 namespace srpc { namespace common {
 
-    class errro_type {
-    public:
-    private:
-    };
-
-    class service {
-    };
-
-    template <typename MessageType>
-    class service_executor {
-
-    public:
-        using message_type = MessageType;
-        void make_call(message_type msg) {}
-
-    private:
-    };
-
     template <typename MessageType, typename ServiceExecutorType>
     class executor_layer : public srpc::layer<MessageType> {
     public:
