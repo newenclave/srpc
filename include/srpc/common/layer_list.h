@@ -49,7 +49,7 @@ public:
 
     void push_front(layer_uptr new_value)
     {
-        layer_type* old = list_.empty() ? get_lower() : list_.front().get();
+        layer_type* old = list_.empty() ? this->get_lower() : list_.front().get();
         new_value->set_lower(old);
         if (old) {
             old->set_upper(new_value.get());
@@ -66,7 +66,7 @@ public:
 
     void push_back(layer_uptr new_value)
     {
-        layer_type* old = list_.empty() ? get_upper() : list_.back().get();
+        layer_type* old = list_.empty() ? this->get_upper() : list_.back().get();
         new_value->set_upper(old);
         if (old) {
             old->set_lower(new_value.get());
