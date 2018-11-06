@@ -10,8 +10,8 @@ class layer_list
 public:
     using message_type = MsgType;
     using layer_type = layer<MsgType>;
-    using upper_pointer_type = layer_type::upper_pointer_type;
-    using lower_pointer_type = layer_type::lower_pointer_type;
+    using upper_pointer_type = typename layer_type::upper_pointer_type;
+    using lower_pointer_type = typename layer_type::lower_pointer_type;
     using layer_uptr = std::unique_ptr<layer_type>;
     using iterator = typename std::list<layer_uptr>::iterator;
     using const_iterator = typename std::list<layer_uptr>::const_iterator;
