@@ -2,7 +2,7 @@
 #include "layer.h"
 #include <list>
 
-namespace srpc {
+namespace srpc { namespace common {
 
 template <typename MsgType>
 class layer_list
@@ -112,4 +112,5 @@ public:
 private:
     std::list<layer_uptr> list_;
 };
-}
+
+}}

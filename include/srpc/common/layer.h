@@ -2,7 +2,7 @@
 
 #include <memory>
 
-namespace srpc {
+namespace srpc { namespace common {
 
 namespace traits {
     struct raw_pointer {
@@ -178,4 +178,5 @@ public:
         this->send_to_upper(std::move(msg));
     }
 };
-}
+
+}}

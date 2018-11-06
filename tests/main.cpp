@@ -1,5 +1,7 @@
 #include "srpc/common/layer.h"
 #include "srpc/common/layer_list.h"
+#include "srpc/common/executor_layer.h"
+
 #include <iostream>
 
 #include "google/protobuf/service.h"
@@ -14,41 +16,6 @@ namespace srpc { namespace client {
 
 namespace srpc { namespace common {
 
-    template <typename MessageType, typename ServiceExecutorType>
-    class executor_layer : public srpc::layer<MessageType> {
-    public:
-        using service_executor = ServiceExecutorType;
-        using message_type = MessageType;
-
-        executor_layer() = default;
-        executor_layer(srpc::layer<MessageType>* lower_layers)
-        {
-            set_lower(lower_layers);
-        }
-
-        service_executor& get_executor_layer()
-        {
-            return executor_;
-        }
-
-        const service_executor& get_executor_layer() const
-        {
-            return executor_;
-        }
-
-    public:
-        void from_upper(message_type msg)
-        {
-            this->send_to_lower(std::move(msg));
-        }
-
-        void from_lower(message_type msg)
-        {
-            executor_.make_call(std::move(msg));
-        }
-        service_executor executor_;
-    };
-
     template <typename MessageType, typename ServiceExecutor>
     class connection_info {
 
@@ -56,7 +23,7 @@ namespace srpc { namespace common {
         using message_type = MessageType;
         using service_executor = ServiceExecutor;
         using this_type = connection_info<message_type, service_executor>;
-        using protocol_layer_type = srpc::layer_list<message_type>;
+        using protocol_layer_type = srpc::common::layer_list<message_type>;
         using executor_layer_type
             = executor_layer<message_type, service_executor>;
 
@@ -123,7 +90,7 @@ private:
     connection_type* cnt_;
 };
 
-class parse_layer : public srpc::layer<message> {
+class parse_layer : public srpc::common::layer<message> {
     void from_upper(message msg) override
     {
         msg.command.append(" ");
@@ -138,7 +105,7 @@ class parse_layer : public srpc::layer<message> {
     }
 };
 
-class print_console_layer : public srpc::layer<message> {
+class print_console_layer : public srpc::common::layer<message> {
     void from_upper(message msg) override
     {
         if (msg.code) {
