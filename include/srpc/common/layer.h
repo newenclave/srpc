@@ -98,12 +98,6 @@ namespace srpc { namespace common {
             return *this;
         }
 
-        void swap(this_type& other)
-        {
-            upper_traits::swap(upper_, other.upper_);
-            lower_traits::swap(lower_, other.lower_);
-        }
-
         virtual void set_upper(upper_pointer_type upper)
         {
             std::swap(upper_, upper);
@@ -120,6 +114,13 @@ namespace srpc { namespace common {
         virtual void from_lower(req_type msg) = 0; // from lower layer
 
     protected:
+
+        void swap(this_type& other)
+        {
+            upper_traits::swap(upper_, other.upper_);
+            lower_traits::swap(lower_, other.lower_);
+        }
+
         void send_to_lower(res_type msg)
         {
             lower_traits::get_write(lower_)->from_upper(std::move(msg));
