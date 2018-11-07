@@ -1,5 +1,6 @@
 
 include/srpc/common/protobuf/*.pb.*
+include/srpc/common/protobuf/protocol/*.pb.*
 
 # Prerequisites
 *.d

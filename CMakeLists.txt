@@ -25,7 +25,7 @@ include_directories( ${PROJECT_SOURCE_DIR} ${INCLUDE_DIRS} )
 
 if(Protobuf_FOUND)
     if(NOT DEFINED PROTOCOL_DIR)
-        set(PROTOCOL_INCLUDE_DIR ${INCLUDE_DIR}/srpc/common/protobuf)
+        set(PROTOCOL_INCLUDE_DIR ${INCLUDE_DIR}/srpc/common/protobuf/protocol)
     else()
         set(PROTOCOL_INCLUDE_DIR ${PROTOCOL_DIR})
     endif()

@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <thread>
-#include "srpc/common/protobuf/lowlevel.pb.h"
+#include "srpc/common/protobuf/protocol/lowlevel.pb.h"
 
 //#include "google/protobuf/service.h"
 
