@@ -27,7 +27,7 @@ namespace srpc { namespace common {
         using this_type = connection_info<message_type, service_executor>;
         using protocol_layer_type = srpc::common::layer_list<message_type>;
         using executor_layer_type
-            = executor_layer<message_type, service_executor>	;
+            = executor_layer<message_type, service_executor>;
 
         virtual ~connection_info() = default;
 

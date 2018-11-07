@@ -19,9 +19,9 @@ message channel {
 };
 
 message lowlevel {
-    bool   wait             = 2; //[default = true];
-    bool   accept_callbacks = 4; //[default = true];
-    bool   accept_response  = 5; //[default = true];
+    bool wait             = 2; //[default = true];
+    bool accept_callbacks = 4; //[default = true];
+    bool accept_response  = 5; //[default = true];
 }
 
 message session {

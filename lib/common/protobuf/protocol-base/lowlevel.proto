@@ -41,16 +41,16 @@ message call_name {
 message lowlevel {
 
     // --- header --- //
-    uint64                         id  = 1;
-    uint64                  target_id  = 2;
-    call_info                    info  = 3;
-    call_name                    call  = 4;
-    srpc.rpc.errors.container   error  = 5;
-    srpc.rpc.options.lowlevel     opt  = 6;
-    bytes                channel_data  = 7; // some optional data from
-                                            // the OTHER side!
-    bytes               lowlevel_data  = 8; // some optional data
-                                            // proto lowlevel can use
+    uint64                         id = 1;
+    uint64                  target_id = 2;
+    call_info                    info = 3;
+    call_name                    call = 4;
+    srpc.rpc.errors.container   error = 5;
+    srpc.rpc.options.lowlevel     opt = 6;
+    bytes                channel_data = 7; // some optional data from
+                                           // the OTHER side!
+    bytes               lowlevel_data = 8; // some optional data
+                                           // proto lowlevel can use
 
     // --- //
     bytes  request = 20;
