@@ -4,14 +4,17 @@
 
 namespace srpc { namespace common {
 
-    template <typename MsgType>
-    class layer_list
-        : public layer<MsgType, traits::raw_pointer, traits::raw_pointer> {
+    template <typename ReqType, typename ResType>
+    class layer_list: public layer<
+                ReqType, ResType,
+                traits::raw_pointer, traits::raw_pointer
+            > {
     public:
-        using message_type = MsgType;
+        using req_type = ReqType;
+        using res_type = ResType;
         using super_type
-            = layer<MsgType, traits::raw_pointer, traits::raw_pointer>;
-        using layer_type = layer<MsgType>;
+            = layer<ReqType, ResType, traits::raw_pointer, traits::raw_pointer>;
+        using layer_type = layer<ReqType, ResType>;
         using upper_pointer_type = typename layer_type::upper_pointer_type;
         using lower_pointer_type = typename layer_type::lower_pointer_type;
         using layer_uptr = std::unique_ptr<layer_type>;
@@ -39,12 +42,12 @@ namespace srpc { namespace common {
         }
 
     public:
-        void from_upper(message_type msg) override
+        void from_upper(res_type msg) override
         {
             list_.front()->from_upper(std::move(msg));
         }
 
-        void from_lower(message_type msg) override
+        void from_lower(req_type msg) override
         {
             list_.back()->from_lower(std::move(msg));
         }

@@ -63,15 +63,17 @@ namespace srpc { namespace common {
         };
     }
 
-    template <typename MsgType, typename UpperPtrTrait = traits::raw_pointer,
+    template <typename ReqType, typename ResType,
+              typename UpperPtrTrait = traits::raw_pointer,
               typename LowerPtrTrait = UpperPtrTrait>
     class layer {
         using upper_traits = UpperPtrTrait;
         using lower_traits = LowerPtrTrait;
-        using this_type = layer<MsgType, upper_traits, lower_traits>;
+        using this_type = layer<ReqType, ResType, upper_traits, lower_traits>;
 
     public:
-        using message_type = MsgType;
+        using req_type = ReqType;
+        using res_type = ResType;
         using upper_pointer_type =
             typename upper_traits::template pointer_type<this_type>;
         using lower_pointer_type =
@@ -113,17 +115,17 @@ namespace srpc { namespace common {
         }
 
     public:
-        virtual void from_upper(message_type msg) = 0; // from upper layer
+        virtual void from_upper(res_type msg) = 0; // from upper layer
 
-        virtual void from_lower(message_type msg) = 0; // from lower layer
+        virtual void from_lower(req_type msg) = 0; // from lower layer
 
     protected:
-        void send_to_lower(message_type msg)
+        void send_to_lower(res_type msg)
         {
             lower_traits::get_write(lower_)->from_upper(std::move(msg));
         }
 
-        void send_to_upper(message_type msg)
+        void send_to_upper(req_type msg)
         {
             upper_traits::get_write(upper_)->from_lower(std::move(msg));
         }
@@ -153,30 +155,31 @@ namespace srpc { namespace common {
         lower_pointer_type lower_ = nullptr;
     };
 
-    template <typename MsgType, 
+    template <typename ReqType, typename ResType,
               typename UpperPtrTrait = traits::raw_pointer,
               typename LowerPtrTrait = UpperPtrTrait>
     class pass_through_layer
-        : public layer<MsgType, UpperPtrTrait, LowerPtrTrait> {
+        : public layer<ReqType, ResType, UpperPtrTrait, LowerPtrTrait> {
 
         using upper_traits = UpperPtrTrait;
         using lower_traits = LowerPtrTrait;
         using this_type
-            = pass_through_layer<MsgType, upper_traits, lower_traits>;
-        using super_type = layer<MsgType, upper_traits, lower_traits>;
+            = pass_through_layer<ReqType, ResType, upper_traits, lower_traits>;
+        using super_type = layer<ReqType, ResType, upper_traits, lower_traits>;
 
     public:
-        using message_type = typename super_type::message_type;
+        using req_type = typename super_type::req_type;
+        using res_type = typename super_type::res_type;
         using upper_pointer_type = typename super_type::upper_pointer_type;
         using lower_pointer_type = typename super_type::lower_pointer_type;
 
     public:
-        void from_upper(message_type msg) override // from upper layer
+        void from_upper(res_type msg) override // from upper layer
         {
             this->send_to_lower(std::move(msg));
         }
 
-        void from_lower(message_type msg) override // from lower layer
+        void from_lower(req_type msg) override // from lower layer
         {
             this->send_to_upper(std::move(msg));
         }

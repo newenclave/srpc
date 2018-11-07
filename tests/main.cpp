@@ -18,16 +18,17 @@ namespace srpc { namespace client {
 
 namespace srpc { namespace common {
 
-    template <typename MessageType, typename ServiceExecutor>
+    template <typename ReqType, typename ResType, typename ServiceExecutor>
     class connection_info {
 
     public:
-        using message_type = MessageType;
+        using req_type = ReqType;
+        using res_type = ResType;
         using service_executor = ServiceExecutor;
-        using this_type = connection_info<message_type, service_executor>;
-        using protocol_layer_type = srpc::common::layer_list<message_type>;
+        using this_type = connection_info<req_type, res_type, service_executor>;
+        using protocol_layer_type = layer_list<req_type, res_type>;
         using executor_layer_type
-            = executor_layer<message_type, service_executor>;
+            = executor_layer<req_type, res_type, service_executor>;
 
         virtual ~connection_info() = default;
 
@@ -55,16 +56,22 @@ namespace srpc { namespace common {
 
 using namespace srpc::common;
 
-struct message {
-    message(int c, std::string cmd, std::string dat)
-        : code(c)
-        , command(std::move(cmd))
+struct request {
+    request(std::string cmd, std::string dat)
+        : command(std::move(cmd))
         , data(std::move(dat))
     {
     }
-    int code = 0;
     std::string command;
     std::string data;
+};
+
+
+struct response {
+    response(int c)
+        : code(c)
+    {}
+    int code = 0;
 };
 
 template <typename ConnTrait>
@@ -73,16 +80,16 @@ public:
     using connection_trait = ConnTrait;
     using connection_type = typename connection_trait::connection_type;
     executor() = default;
-    void make_call(message msg)
+    void make_call(request msg)
     {
         std::cout << "c: " << msg.command << "\n";
         std::cout << "d: " << msg.data << "\n";
         if (msg.command == "-") {
-            cnt_->get_executor_layer().from_upper(message( -1, "-", "failed" ));
+            cnt_->get_executor_layer().from_upper(response(-1));
         } else if (msg.command == "q") {
             // cnt_->stop();
         } else {
-            cnt_->get_executor_layer().from_upper(message( 0, "+", "" ));
+            cnt_->get_executor_layer().from_upper(response(0));
         }
     }
 
@@ -95,14 +102,11 @@ private:
     connection_type* cnt_;
 };
 
-class parse_layer : public srpc::common::layer<message> {
-    void from_upper(message msg) override
+class parse_layer : public srpc::common::layer<request, response> {
+    void from_upper(response msg) override
     {
-        msg.command.append(" ");
-        msg.command.append(msg.data);
-        msg.data.swap(msg.command);
     }
-    void from_lower(message msg) override
+    void from_lower(request msg) override
     {
         msg.command.assign(msg.data.begin(), msg.data.begin() + 1);
         msg.data.assign(msg.data.begin() + 1, msg.data.end());
@@ -110,16 +114,16 @@ class parse_layer : public srpc::common::layer<message> {
     }
 };
 
-class print_console_layer : public srpc::common::layer<message> {
-    void from_upper(message msg) override
+class print_console_layer : public srpc::common::layer<request, response> {
+    void from_upper(response msg) override
     {
         if (msg.code) {
-            std::cout << "error: " << msg.data << "\n";
+            std::cout << "error: " << msg.code << "\n";
         } else {
-            std::cout << "Ok: " << msg.data << "\n";
+            std::cout << "Ok\n";
         }
     }
-    void from_lower(message msg) override
+    void from_lower(request msg) override
     {
         send_to_upper(std::move(msg));
     }
@@ -133,7 +137,7 @@ struct trait {
 
 using executor_type = executor<trait>;
 
-class connection : public connection_info<message, executor_type> {
+class connection : public connection_info<request, response, executor_type> {
 
 public:
     connection() {}
@@ -169,7 +173,7 @@ int main()
         while (true) {
             std::string command;
             std::getline(std::cin, command);
-            con.get_protocol_layer().from_lower(message( 0, "", command ));
+            con.get_protocol_layer().from_lower(request("", command ));
         }
     });
 

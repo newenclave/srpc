@@ -4,11 +4,13 @@
 
 namespace srpc { namespace common {
 
-    template <typename MessageType, typename ServiceExecutorType>
-    class executor_layer : public layer<MessageType> {
+    template <typename ReqType, typename ResType,
+              typename ServiceExecutorType>
+    class executor_layer : public layer<ReqType, ResType> {
     public:
         using service_executor = ServiceExecutorType;
-        using message_type = MessageType;
+        using req_type = ReqType;
+        using res_type = ResType;
 
         executor_layer() = default;
 
@@ -23,12 +25,12 @@ namespace srpc { namespace common {
         }
 
     public:
-        void from_upper(message_type msg)
+        void from_upper(res_type msg)
         {
             this->send_to_lower(std::move(msg));
         }
 
-        void from_lower(message_type msg)
+        void from_lower(req_type msg)
         {
             executor_.make_call(std::move(msg));
         }
