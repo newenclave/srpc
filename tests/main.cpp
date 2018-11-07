@@ -26,10 +26,7 @@ namespace srpc { namespace common {
         using this_type = connection_info<message_type, service_executor>;
         using protocol_layer_type = srpc::common::layer_list<message_type>;
         using executor_layer_type
-            = executor_layer<message_type, service_executor>;
-
-        virtual std::string name() const = 0;
-        virtual std::uintptr_t handle() const = 0;
+            = executor_layer<message_type, service_executor>	;
 
         virtual ~connection_info() = default;
 
@@ -139,15 +136,6 @@ class connection : public connection_info<message, executor_type> {
 
 public:
     connection() {}
-
-    std::string name() const
-    {
-        return "simple console client";
-    }
-    std::uintptr_t handle() const
-    {
-        return 0;
-    }
 
     void init()
     {

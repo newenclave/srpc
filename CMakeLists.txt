@@ -18,12 +18,23 @@ set( INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include )
 
 message("Include dir: " ${PROJECT_SOURCE_DIR}/include)
 
-set( INCLUDE_DIRS
-     ${INCLUDE_DIR}
-     ${PROTOCOL_INCLUDE_DIR}
-     ${PROTOBUF_INCLUDE_DIRS}
-   )
+set( INCLUDE_DIRS ${INCLUDE_DIR} )
+
 
 include_directories( ${PROJECT_SOURCE_DIR} ${INCLUDE_DIRS} )
+
+if(Protobuf_FOUND)
+    if(NOT DEFINED PROTOCOL_DIR)
+        set(PROTOCOL_INCLUDE_DIR ${INCLUDE_DIR}/srpc/common/protobuf)
+    else()
+        set(PROTOCOL_INCLUDE_DIR ${PROTOCOL_DIR})
+    endif()
+
+    add_subdirectory(lib/protobuf)
+    include_directories( ${PROJECT_SOURCE_DIR}      
+        ${PROTOCOL_INCLUDE_DIR}
+        ${PROTOBUF_INCLUDE_DIRS}
+    )
+endif(Protobuf_FOUND)
 
 add_subdirectory(tests)

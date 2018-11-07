@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package srpc.rpc;
+option cc_generic_services = true;
+
+import "errors.proto";
+import "options.proto";
+
+message call_info {
+    enum type_enum {
+
+        TYPE_NONE            = 0x00; // value for internal usage only
+
+        TYPE_CLIENT_CALL     = 0x01; // from client bin(00001)
+        TYPE_SERVER_CALL     = 0x02; // from server bin(00010)
+
+        TYPE_CALLBACK_MASK   = 0x04; // mask        bin(00100)
+        TYPE_CLIENT_CALLBACK = 0x05; // from client bin(00101)
+        TYPE_SERVER_CALLBACK = 0x06; // from server bin(00110)
+
+        TYPE_SERVICE         = 0x08; // internal    bin(01000)
+        TYPE_INTERNAL        = 0x18; // internal    bin(11000)
+
+    }
+
+    enum flags_enum {
+        FLAG_NONE            = 0x00;
+        FLAG_CALLBACK_ALONE  = 0x01;
+    }
+
+    uint32 call_type    = 1; //[default = 0]; // @type_enum
+    uint32 call_flags   = 2; //[default = 0]; // @flags_enum
+
+}
+
+message call_name {
+    bytes service_id = 1;
+    bytes method_id  = 2;
+}
+
+message lowlevel {
+
+    // --- header --- //
+    uint64                         id  = 1;
+    uint64                  target_id  = 2;
+    call_info                    info  = 3;
+    call_name                    call  = 4;
+    srpc.rpc.errors.container   error  = 5;
+    srpc.rpc.options.lowlevel     opt  = 6;
+    bytes                channel_data  = 7; // some optional data from
+                                            // the OTHER side!
+    bytes               lowlevel_data  = 8; // some optional data
+                                            // proto lowlevel can use
+
+    // --- //
+    bytes  request = 20;
+    bytes response = 21;
+}
+

@@ -1,12 +1,28 @@
 
-aux_source_directory(. src_dir)
-
 set(exe_name srpc_test)
+
+include( "../srpc_files.cmake" )
+
+set(SRPC_DIR_LIST)
+srpc_all_headers_path( SRPC_DIR_LIST "../include" )
+
+list( APPEND src_dirs
+      .
+      ${SRPC_DIR_LIST}
+      )
+
+foreach( src_dir ${src_dirs} )
+    aux_source_directory(${src_dir} exe_src)
+    file(GLOB headers ${src_dir}/*.h)
+    list(APPEND exe_src ${headers})
+endforeach( )
+
+include_directories( ${INCLUDE_DIR}/srpc/common )
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
-add_executable(${exe_name} ${src_dir})
+add_executable(${exe_name} ${exe_src})
 
 target_link_libraries(${exe_name} ${Protobuf_LIBRARIES})
 

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "google/protobuf/descriptor.proto";
+
+// index 56000
+
+package srpc.rpc.options;
+
+message channel {
+
+    /// other side waits answer
+    bool       wait             = 2; //[ default = true ];
+
+    /// wait timeout (MICROseconds); only if 'wait' is true;
+    uint64     timeout          = 3; //[ default = 30000000 ];//30 sec.
+
+    /// other side accepts callbacks for this call; only if 'wait' is true
+    bool       accept_callbacks = 4; //[ default = true ];
+};
+
+message lowlevel {
+    bool   wait             = 2; //[default = true];
+    bool   accept_callbacks = 4; //[default = true];
+    bool   accept_response  = 5; //[default = true];
+}
+
+message session {
+    uint32 max_active_calls    = 1; //[default = 5];      //per user
+    uint32 max_message_length  = 2; //[default = 65536];  //per user
+//    uint32 max_total_calls     = 3; //[default = 20];
+    uint32 max_stack_size      = 4; //[default = 64];     //per user
+    uint32 read_buffer_size    = 5; //[default = 4096];   //per user
+    uint32 init_timeout        = 6; //[default = 10000];  //millisec
+                                                          // per user
+}
+
