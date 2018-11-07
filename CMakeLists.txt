@@ -30,7 +30,7 @@ if(Protobuf_FOUND)
         set(PROTOCOL_INCLUDE_DIR ${PROTOCOL_DIR})
     endif()
 
-    add_subdirectory(lib/protobuf)
+    add_subdirectory(lib/common/protobuf)
     include_directories( ${PROJECT_SOURCE_DIR}      
         ${PROTOCOL_INCLUDE_DIR}
         ${PROTOBUF_INCLUDE_DIRS}

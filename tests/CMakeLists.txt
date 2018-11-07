@@ -36,5 +36,5 @@ endif(MINGW)
 
 
 if(Protobuf_FOUND)
-    target_link_libraries( ${exe_name} common_pbuf )
+    target_link_libraries( ${exe_name} common_protobuf )
 endif(rotobuf_FOUND)

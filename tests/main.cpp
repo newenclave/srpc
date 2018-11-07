@@ -160,7 +160,6 @@ private:
 
 int main()
 {
-
     connection con;
     con.get_protocol_layer().create_back<print_console_layer>();
     con.get_protocol_layer().create_back<parse_layer>();

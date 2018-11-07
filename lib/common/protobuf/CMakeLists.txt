@@ -1,9 +1,9 @@
-set( lib_name common_pbuf )
+set( lib_name common_protobuf )
 
-include( "../../srpc_files.cmake" )
+include( "../../../srpc_files.cmake" )
 
 set(SRPC_DIR_LIST)
-srpc_all_headers_path( SRPC_DIR_LIST "../../include" )
+srpc_all_headers_path( SRPC_DIR_LIST "../../../include" )
 
 list( APPEND src_dirs
       .
