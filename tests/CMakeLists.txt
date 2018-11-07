@@ -34,3 +34,7 @@ if(MINGW)
     target_link_libraries( ${exe_name} ws2_32 mswsock )
 endif(MINGW)
 
+
+if(Protobuf_FOUND)
+    target_link_libraries( ${exe_name} common_pbuf )
+endif(rotobuf_FOUND)

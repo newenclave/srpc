@@ -4,8 +4,9 @@
 
 #include <iostream>
 #include <thread>
+#include "srpc/common/protobuf/lowlevel.pb.h"
 
-#include "google/protobuf/service.h"
+//#include "google/protobuf/service.h"
 
 namespace srpc { namespace server {
 
