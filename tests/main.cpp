@@ -6,7 +6,7 @@
 #include <thread>
 #include "srpc/common/protobuf/protocol/lowlevel.pb.h"
 
-//#include "google/protobuf/service.h"
+#include "google/protobuf/service.h"
 
 namespace srpc { namespace server {
 
@@ -56,22 +56,8 @@ namespace srpc { namespace common {
 
 using namespace srpc::common;
 
-struct request {
-    request(std::string cmd, std::string dat)
-        : command(std::move(cmd))
-        , data(std::move(dat))
-    {
-    }
-    std::string command;
-    std::string data;
-};
-
-
-struct response {
-    response(int c)
-        : code(c)
-    {}
-    int code = 0;
+struct message {
+	srpc::rpc::lowlevel ll;
 };
 
 template <typename ConnTrait>
@@ -80,17 +66,30 @@ public:
     using connection_trait = ConnTrait;
     using connection_type = typename connection_trait::connection_type;
     executor() = default;
-    void make_call(request msg)
+    void make_call(message msg)
     {
-        std::cout << "c: " << msg.command << "\n";
-        std::cout << "d: " << msg.data << "\n";
-        if (msg.command == "-") {
-            cnt_->get_executor_layer().from_upper(response(-1));
-        } else if (msg.command == "q") {
-            // cnt_->stop();
-        } else {
-            cnt_->get_executor_layer().from_upper(response(0));
-        }
+		auto srv_itr = services_.find(msg.ll.call().service_id());
+		int error = 200;
+		if(srv_itr != services_.end()) {
+			auto method = srv_itr->second->GetDescriptor()->FindMethodByName(msg.ll.call().method_id());
+			if(method) {
+				auto request = srv_itr->second->GetRequestPrototype().New(&arena_);
+				auto response = srv_itr->second->GetResponsePrototype().New(&arena_);
+				request->ParseFromString(msg.ll.request());
+				srv_itr->second->CallMethod(method, nullptr, request, response, nullptr);
+				msg.ll.clear_request();
+				msg.ll.set_response(response->SerializeAsString());
+			} else {
+				error = 401;
+			}
+		} else {
+			error = 404;
+		}
+		if(error !=  200) {
+			srpc::rpc::lowlevel error;
+			error.set_id(msg.ll.id());
+			error.mutable_error()->set_code(error);
+		}
     }
 
     void set_connection_info(connection_type* cnt)
@@ -98,32 +97,34 @@ public:
         cnt_ = cnt;
     }
 
+	template <typename Svc, typename ...Args>
+	void add_service(Args &&...args) 
+	{
+		auto svc = std::make_unique<Svc>(std::forward<Args>(args)...);
+		std::string name = svc->GetDescriptor().full_name();
+		services_.emplace(std::make_pair(std::move(name), std::move(svc)));
+	}
+
 private:
     connection_type* cnt_;
+    std::map<std::string, std::unique_ptr<google::protobuf::Service> > services_;
+    google::protobuf::Arena arena_;
 };
 
-class parse_layer : public srpc::common::layer<request, response> {
-    void from_upper(response msg) override
+class parse_layer : public srpc::common::layer<message, message> {
+    void from_upper(message msg) override
     {
     }
-    void from_lower(request msg) override
+    void from_lower(message msg) override
     {
-        msg.command.assign(msg.data.begin(), msg.data.begin() + 1);
-        msg.data.assign(msg.data.begin() + 1, msg.data.end());
-        send_to_upper(std::move(msg));
     }
 };
 
-class print_console_layer : public srpc::common::layer<request, response> {
-    void from_upper(response msg) override
+class print_console_layer : public srpc::common::layer<message, message> {
+    void from_upper(message msg) override
     {
-        if (msg.code) {
-            std::cout << "error: " << msg.code << "\n";
-        } else {
-            std::cout << "Ok\n";
-        }
     }
-    void from_lower(request msg) override
+    void from_lower(message msg) override
     {
         send_to_upper(std::move(msg));
     }
@@ -137,14 +138,14 @@ struct trait {
 
 using executor_type = executor<trait>;
 
-class connection : public connection_info<request, response, executor_type> {
+class connection : public connection_info<message, message, executor_type> {
 
 public:
     connection() {}
 
     void init()
     {
-        get_executor_layer().get_executor_layer().set_connection_info(this);
+        get_executor_layer().get_executor().set_connection_info(this);
         active_ = true;
     }
 
@@ -173,7 +174,7 @@ int main()
         while (true) {
             std::string command;
             std::getline(std::cin, command);
-            con.get_protocol_layer().from_lower(request("", command ));
+			con.get_protocol_layer().from_lower({});
         }
     });
 

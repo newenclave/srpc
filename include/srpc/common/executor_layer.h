@@ -14,7 +14,7 @@ namespace srpc { namespace common {
 
         executor_layer() = default;
 
-        service_executor& get_executor_layer()
+        service_executor& get_executor()
         {
             return executor_;
         }
