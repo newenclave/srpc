@@ -48,6 +48,16 @@ namespace srpc { namespace common {
             return executor_;
         }
 
+		void send_response(res_type resp)
+		{
+			executor_.from_upper(std::move(resp));
+		}
+
+		void send_request(req_type req)
+		{
+			protocol_.from_lower(std::move(req));
+		}
+
     private:
         executor_layer_type executor_;
         protocol_layer_type protocol_;
@@ -73,8 +83,8 @@ public:
 		if(srv_itr != services_.end()) {
 			auto method = srv_itr->second->GetDescriptor()->FindMethodByName(msg.ll.call().method_id());
 			if(method) {
-				auto request = srv_itr->second->GetRequestPrototype().New(&arena_);
-				auto response = srv_itr->second->GetResponsePrototype().New(&arena_);
+				auto request = srv_itr->second->GetRequestPrototype(method).New(&arena_);
+				auto response = srv_itr->second->GetResponsePrototype(method).New(&arena_);
 				request->ParseFromString(msg.ll.request());
 				srv_itr->second->CallMethod(method, nullptr, request, response, nullptr);
 				msg.ll.clear_request();
@@ -86,10 +96,12 @@ public:
 			error = 404;
 		}
 		if(error !=  200) {
-			srpc::rpc::lowlevel error;
-			error.set_id(msg.ll.id());
-			error.mutable_error()->set_code(error);
+			srpc::rpc::lowlevel errmsg;
+			errmsg.set_id(msg.ll.id());
+			errmsg.mutable_error()->set_code(error);
+			msg.ll.Swap(&errmsg);
 		}
+		cnt_->send_response(std::move(msg));
     }
 
     void set_connection_info(connection_type* cnt)
