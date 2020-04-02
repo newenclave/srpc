@@ -9,11 +9,11 @@
 class test_slot : public srpc::common::layer<int, int> {
 
 public:
-    void write_upper(int message)
+    void read_upper(int message)
     {
         std::cout << "from upper " << message << "\n";
     }
-    void write_lower(int message)
+    void read_lower(int message)
     {
         std::cout << "from lower " << message << "\n";
     }

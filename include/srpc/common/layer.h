@@ -2,6 +2,18 @@
 #include "srpc/common/slot.h"
 
 namespace srpc { namespace common {
+    /*
+            upper_slot
+                v
+        +-------|-------+
+        |  read_upper() |
+        |     layer     |
+        |  read_lower() |
+        +-------|-------+
+                ^
+            lower_slot
+    */
+
 
     template <typename UpperT, typename LowerT>
     struct layer {
@@ -9,7 +21,7 @@ namespace srpc { namespace common {
         struct upper_slot_impl : public slot<UpperT> {
             void write(UpperT msg) override
             {
-                parent_->write_upper(std::move(msg));
+                parent_->read_upper(std::move(msg));
             }
             layer *parent_ = nullptr;
         };
@@ -17,7 +29,7 @@ namespace srpc { namespace common {
         struct lower_slot_impl : public slot<LowerT> {
             void write(LowerT msg) override
             {
-                parent_->write_lower(std::move(msg));
+                parent_->read_lower(std::move(msg));
             }
             layer *parent_ = nullptr;
         };
@@ -46,8 +58,8 @@ namespace srpc { namespace common {
         layer(const layer &other) = delete;
         layer &operator=(const layer &other) = delete;
 
-        virtual void write_upper(UpperT mgs) = 0;
-        virtual void write_lower(LowerT mgs) = 0;
+        virtual void read_upper(UpperT mgs) = 0;
+        virtual void read_lower(LowerT mgs) = 0;
 
         slot<UpperT> &upper_slot()
         {
