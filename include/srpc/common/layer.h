@@ -1,189 +1,93 @@
 #pragma once
-
-#include <memory>
+#include "srpc/common/slot.h"
 
 namespace srpc { namespace common {
 
-    namespace traits {
-        struct raw_pointer {
-            template <typename T>
-            using pointer_type = T*;
-
-            template <typename T>
-            static bool is_empty(pointer_type<T> ptr)
+    template <typename UpperT, typename LowerT>
+    struct layer {
+    private:
+        struct upper_slot_impl : public slot<UpperT> {
+            void write(UpperT msg) override
             {
-                return ptr == nullptr;
+                parent_->write_upper(std::move(msg));
             }
-
-            template <typename T>
-            static pointer_type<T> get_write(pointer_type<T> ptr)
-            {
-                return ptr;
-            }
-
-            template <typename T>
-            static void destroy(pointer_type<T>)
-            {
-            }
-
-            template <typename T>
-            static void swap(pointer_type<T>& lh, pointer_type<T>& rh)
-            {
-                std::swap(lh, rh);
-            }
+            layer *parent_ = nullptr;
         };
 
-        struct unique_pointer {
-            template <typename T>
-            using pointer_type = std::unique_ptr<T>;
-
-            template <typename T>
-            static bool is_empty(pointer_type<T>& ptr)
+        struct lower_slot_impl : public slot<LowerT> {
+            void write(LowerT msg) override
             {
-                return ptr == nullptr;
+                parent_->write_lower(std::move(msg));
             }
-
-            template <typename T>
-            static pointer_type<T>& get_write(pointer_type<T>& ptr)
-            {
-                return ptr;
-            }
-
-            template <typename T>
-            static void destroy(pointer_type<T>& ptr)
-            {
-                ptr.reset();
-            }
-
-            template <typename T>
-            static void swap(pointer_type<T>& lh, pointer_type<T>& rh)
-            {
-                std::swap(lh, rh);
-            }
+            layer *parent_ = nullptr;
         };
-    }
-
-    template <typename ReqType, typename ResType,
-              typename UpperPtrTrait = traits::raw_pointer,
-              typename LowerPtrTrait = UpperPtrTrait>
-    class layer {
-        using upper_traits = UpperPtrTrait;
-        using lower_traits = LowerPtrTrait;
-        using this_type = layer<ReqType, ResType, upper_traits, lower_traits>;
 
     public:
-        using req_type = ReqType;
-        using res_type = ResType;
-        using upper_pointer_type =
-            typename upper_traits::template pointer_type<this_type>;
-        using lower_pointer_type =
-            typename lower_traits::template pointer_type<this_type>;
+        virtual ~layer() = default;
 
-        virtual ~layer()
+        layer()
         {
-            upper_traits::destroy(upper_);
-            lower_traits::destroy(lower_);
+            upper_slot_.parent_ = this;
+            lower_slot_.parent_ = this;
         }
 
-        layer() = default;
+        layer(layer &&other)
+        {
+            upper_slot_.parent_ = this;
+            lower_slot_.parent_ = this;
+            swap(other);
+        }
 
-        layer(this_type&& other)
+        layer &operator=(layer &&other)
         {
             swap(other);
         }
 
-        layer& operator=(this_type&& other)
+        layer(const layer &other) = delete;
+        layer &operator=(const layer &other) = delete;
+
+        virtual void write_upper(UpperT mgs) = 0;
+        virtual void write_lower(LowerT mgs) = 0;
+
+        slot<UpperT> &upper_slot()
         {
-            swap(other);
-            return *this;
+            return upper_slot_;
         }
 
-        virtual void set_upper(upper_pointer_type upper)
+        slot<LowerT> &lower_slot()
         {
-            std::swap(upper_, upper);
+            return lower_slot_;
         }
 
-        virtual void set_lower(lower_pointer_type lower)
+        template <typename LT>
+        layer<LowerT, LT> &connect(layer<LowerT, LT> &other)
         {
-            std::swap(lower_, lower);
+            lower_ = &other.upper_slot();
+            other.set_upper(&lower_slot_);
+            return other;
         }
 
-    public:
-        virtual void from_upper(res_type msg) = 0; // from upper layer
+        void set_upper(slot<UpperT> *value)
+        {
+            upper_ = value;
+        }
+        void set_lower(slot<LowerT> *value)
+        {
+            lower_ = value;
+        }
 
-        virtual void from_lower(req_type msg) = 0; // from lower layer
+        void swap(layer &other)
+        {
+            std::swap(upper_, other.upper_);
+            std::swap(lower_, other.lower_);
+        }
 
     protected:
-
-        void swap(this_type& other)
-        {
-            upper_traits::swap(upper_, other.upper_);
-            lower_traits::swap(lower_, other.lower_);
-        }
-
-        void send_to_lower(res_type msg)
-        {
-            lower_traits::get_write(lower_)->from_upper(std::move(msg));
-        }
-
-        void send_to_upper(req_type msg)
-        {
-            upper_traits::get_write(upper_)->from_lower(std::move(msg));
-        }
-
-        bool has_upper() const
-        {
-            return !upper_traits::is_empty(upper_);
-        }
-
-        bool has_lower() const
-        {
-            return !lower_traits::is_empty(lower_);
-        }
-
-        upper_pointer_type& get_upper()
-        {
-            return upper_;
-        }
-
-        lower_pointer_type& get_lower()
-        {
-            return lower_;
-        }
+        slot<UpperT> *upper_ = nullptr;
+        slot<LowerT> *lower_ = nullptr;
 
     private:
-        upper_pointer_type upper_ = nullptr;
-        lower_pointer_type lower_ = nullptr;
+        upper_slot_impl upper_slot_;
+        lower_slot_impl lower_slot_;
     };
-
-    template <typename ReqType, typename ResType,
-              typename UpperPtrTrait = traits::raw_pointer,
-              typename LowerPtrTrait = UpperPtrTrait>
-    class pass_through_layer
-        : public layer<ReqType, ResType, UpperPtrTrait, LowerPtrTrait> {
-
-        using upper_traits = UpperPtrTrait;
-        using lower_traits = LowerPtrTrait;
-        using this_type
-            = pass_through_layer<ReqType, ResType, upper_traits, lower_traits>;
-        using super_type = layer<ReqType, ResType, upper_traits, lower_traits>;
-
-    public:
-        using req_type = typename super_type::req_type;
-        using res_type = typename super_type::res_type;
-        using upper_pointer_type = typename super_type::upper_pointer_type;
-        using lower_pointer_type = typename super_type::lower_pointer_type;
-
-    public:
-        void from_upper(res_type msg) override // from upper layer
-        {
-            this->send_to_lower(std::move(msg));
-        }
-
-        void from_lower(req_type msg) override // from lower layer
-        {
-            this->send_to_upper(std::move(msg));
-        }
-    };
-
 }}

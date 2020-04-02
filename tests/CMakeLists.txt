@@ -8,7 +8,7 @@ srpc_all_headers_path( SRPC_DIR_LIST "../include" )
 
 list( APPEND src_dirs
       .
-      ${SRPC_DIR_LIST}
+      ${SRPC_DIR_LIST} 
       )
 
 foreach( src_dir ${src_dirs} )
@@ -19,8 +19,8 @@ endforeach( )
 
 include_directories( ${INCLUDE_DIR}/srpc/common )
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED 14)
 
 add_executable(${exe_name} ${exe_src})
 

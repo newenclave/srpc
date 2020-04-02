@@ -16,6 +16,9 @@ ReflowComments: true
 AccessModifierOffset: -4
 MaxEmptyLinesToKeep: 2
 
+DerivePointerAlignment: false
+PointerAlignment: Right
+
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterClass: false
