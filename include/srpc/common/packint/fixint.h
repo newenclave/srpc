@@ -8,34 +8,27 @@
 namespace srpc { namespace common { namespace packint {
     template <typename SizeType>
     struct fixint {
-
         typedef SizeType size_type;
-
         static const size_t max_length = sizeof(size_type);
         static const size_t min_length = sizeof(size_type);
 
-        static bool valid_length(size_t len)
-        {
-            return (len >= min_length) && (len <= max_length);
-        }
+        static_assert(std::is_unsigned<SizeType>::value,
+                      "The value should be unsigned");
 
+    private:
         template <typename IterT>
-        static size_t packed_length(IterT begin, const IterT &end)
+        static size_type unpack_(IterT begin, const IterT &end)
         {
-            return std::distance(begin, end) < max_length ? 0 : max_length;
+            size_type res = 0x00;
+            for (size_t cur = max_length; cur > 0 && begin != end;
+                 --cur, ++begin) {
+                res |= static_cast<size_type>(static_cast<std::uint8_t>(*begin))
+                    << ((cur - 1) << 3);
+            }
+            return res;
         }
 
-        template <typename IterT>
-        static bool valid_packed(const IterT &begin, const IterT &end)
-        {
-            return valid_length(packed_length(begin, end));
-        }
-
-        static size_t result_length(size_type)
-        {
-            return max_length;
-        }
-
+    public:
         static std::string pack(size_type size)
         {
             std::string res(max_length, '\0');
@@ -44,16 +37,6 @@ namespace srpc { namespace common { namespace packint {
                 size >>= 8;
             }
             return res;
-        }
-
-        static void pack(size_type size, std::string &res)
-        {
-            char tmp[max_length];
-            for (size_t current = max_length; current > 0; --current) {
-                tmp[current - 1] = static_cast<char>(size & 0xFF);
-                size >>= 8;
-            }
-            res.assign(&tmp[0], &tmp[max_length]);
         }
 
         static void append(size_type size, std::string &res)
@@ -66,39 +49,14 @@ namespace srpc { namespace common { namespace packint {
             }
         }
 
-        static size_t pack(size_type size, void *result)
-        {
-            std::uint8_t *res = reinterpret_cast<std::uint8_t *>(result);
-            for (size_t current = max_length; current > 0; --current) {
-                res[current - 1] = static_cast<std::uint8_t>(size & 0xFF);
-                size >>= 8;
-            }
-            return max_length;
-        }
-
-        template <typename IterT>
-        static size_type unpack(IterT begin, const IterT &end)
-        {
-            size_type res = 0x00;
-            for (size_t cur = max_length; cur > 0 && begin != end;
-                 --cur, ++begin) {
-                res |= static_cast<size_type>(static_cast<std::uint8_t>(*begin))
-                    << ((cur - 1) << 3);
-            }
-            return res;
-        }
-
-        static size_t unpack(const void *data, size_t len, size_type *res)
+        template <typename ItrT>
+        static std::tuple<std::size_t, size_type> unpack(ItrT begin, ItrT end)
         {
             typedef const std::uint8_t cu8;
-            if (len >= max_length) {
-                if (res) {
-                    *res = unpack(static_cast<cu8 *>(data),
-                                  static_cast<cu8 *>(data) + len);
-                }
-                return max_length;
+            if (std::distance(begin, end) >= max_length) {
+                return std::make_tuple(max_length, unpack_(begin, end));
             }
-            return 0;
+            return std::make_tuple(0, 0);
         }
     };
 
