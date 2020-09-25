@@ -34,16 +34,16 @@ namespace srpc { namespace common { namespace packint {
         template <typename ItrT>
         static std::tuple<std::size_t, size_type> unpack(ItrT begin, ItrT end)
         {
-            size_type res_ = 0x00;
+            size_type res = 0x00;
             std::uint32_t shift = 0x00;
             std::uint8_t last = 0x80;
             size_t i = 0;
 
             for (; begin != end; shift += 7, ++begin, ++i) {
                 last = static_cast<std::uint8_t>(*begin);
-                res_ |= (static_cast<size_type>(last & 0x7F) << shift);
+                res |= (static_cast<size_type>(last & 0x7F) << shift);
                 if ((last & 0x80) == 0) {
-                    return std::make_tuple(i + 1, res_);
+                    return std::make_tuple(i + 1, res);
                 }
             }
             return std::make_tuple(0, 0);
