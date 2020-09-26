@@ -17,8 +17,8 @@ namespace srpc { namespace common {
     template <typename UpperT, typename LowerT>
     class layer;
 
-    template <typename... Args>
-    class layer_list;
+    // template <typename... Args>
+    // class layer_list;
 
     template <typename UpperT, typename LowerT>
     class layer {
@@ -95,12 +95,14 @@ namespace srpc { namespace common {
             return lower_slot_;
         }
 
-        template <typename LT>
-        layer<LowerT, LT> &connect_lower(layer<LowerT, LT> &other_lower)
+        void connect_lower(slot<LowerT> &target_lower_slot)
         {
-            lower_ = &other_lower.upper_slot();
-            other_lower.set_upper(&lower_slot_);
-            return other_lower;
+            lower_ = &target_lower_slot;
+        }
+
+        void connect_upper(slot<UpperT> &target_upper_slot)
+        {
+            upper_ = &target_upper_slot;
         }
 
     protected:
@@ -122,21 +124,6 @@ namespace srpc { namespace common {
         void write_down(LowerT msg)
         {
             lower_->write(std::move(msg));
-        }
-
-        template <typename U, typename L>
-        friend class layer;
-
-        template <typename... Args>
-        friend class layer_list;
-
-        void set_upper(slot<UpperT> *value)
-        {
-            upper_ = value;
-        }
-        void set_lower(slot<LowerT> *value)
-        {
-            lower_ = value;
         }
 
     private:

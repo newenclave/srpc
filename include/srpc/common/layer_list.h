@@ -17,7 +17,12 @@ namespace srpc { namespace common {
         template <int Id, typename T, LAYER_UTILS_ENABLE_IF(Id > 0)>
         void connect_tuple_impl(T &value)
         {
-            std::get<Id - 1>(value).connect_lower(std::get<Id>(value));
+            std::get<Id - 1>(value).connect_lower(
+                std::get<Id>(value).upper_slot());
+
+            std::get<Id>(value).connect_upper(
+                std::get<Id - 1>(value).lower_slot());
+
             connect_tuple_impl<Id - 1>(value);
         }
 
@@ -162,8 +167,8 @@ namespace srpc { namespace common {
             utils::connect_tuple(layers_);
             upper_connector_.parent_ = this;
             lower_connector_.parent_ = this;
-            get<0>().set_upper(&upper_connector_);
-            get<last_index>().set_lower(&lower_connector_);
+            get<0>().connect_upper(upper_connector_);
+            get<last_index>().connect_lower(lower_connector_);
         }
 
         upper_slot_impl upper_connector_;
