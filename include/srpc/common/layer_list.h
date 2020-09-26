@@ -17,11 +17,11 @@ namespace srpc { namespace common {
         template <int Id, typename T, LAYER_UTILS_ENABLE_IF(Id > 0)>
         void connect_tuple_impl(T &value)
         {
-            std::get<Id - 1>(value).connect_lower(
+            std::get<Id - 1>(value).connect_lower( //-V104
                 std::get<Id>(value).upper_slot());
 
             std::get<Id>(value).connect_upper(
-                std::get<Id - 1>(value).lower_slot());
+                std::get<Id - 1>(value).lower_slot()); //-V104
 
             connect_tuple_impl<Id - 1>(value);
         }
@@ -120,7 +120,6 @@ namespace srpc { namespace common {
             : layers_(std::move(other.layers_))
         {
             connect_self();
-            other.connect_self();
             on_lower_ready_ = std::move(other.on_lower_ready_);
             on_upper_ready_ = std::move(other.on_upper_ready_);
         }
@@ -129,7 +128,6 @@ namespace srpc { namespace common {
         {
             layers_ = std::move(other.layers_);
             connect_self();
-            other.connect_self();
             on_lower_ready_ = std::move(other.on_lower_ready_);
             on_upper_ready_ = std::move(other.on_upper_ready_);
             return *this;

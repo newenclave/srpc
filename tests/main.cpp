@@ -12,8 +12,8 @@
 #include "srpc/common/packint/fixint.h"
 #include "srpc/common/packint/varint.h"
 
-using packer = srpc::common::packint::fixint<std::uint16_t>;
-// using packer = srpc::common::packint::varint<std::size_t>;
+// using packer = srpc::common::packint::fixint<std::uint16_t>;
+using packer = srpc::common::packint::varint<std::size_t>;
 
 using namespace srpc::common;
 
@@ -124,27 +124,33 @@ int main()
 
     bbb.on_lower_ready_connect([&packed](auto msg) {
         // std::cout << "ready to send: " << msg.size() << " bytes\n";
-        packed = msg;
+        packed = std::move(msg);
     });
 
     bbb.on_upper_ready_connect([&packed](auto msg) {
         // std::cout << "ready to receive: " << msg << "\n";
-        packed = msg;
+        packed = std::move(msg);
     });
 
     auto start = std::chrono::high_resolution_clock::now();
-    packed = "01234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "123456789";
 
-    auto max = 10'0000;
+    packed = "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890"
+             "1234567890";
+
+    auto max = 1; // 0'000'000;
 
     for (int i = 0; i < max; ++i) {
         // bbb.write_upper("0123456789");
