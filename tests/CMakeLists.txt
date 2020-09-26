@@ -19,9 +19,6 @@ endforeach( )
 
 include_directories( ${INCLUDE_DIR}/srpc/common )
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED 14)
-
 add_executable(${exe_name} ${exe_src})
 
 target_link_libraries(${exe_name} ${Protobuf_LIBRARIES})
