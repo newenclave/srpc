@@ -12,58 +12,17 @@
 #include "srpc/common/packint/fixint.h"
 #include "srpc/common/packint/varint.h"
 
+#ifdef _WIN32
+
+#include <WinSock2.h>
+#include <windows.h>
+
+#pragma comment(lib, "ws2_32")
+#endif
+
+
 // using packer = srpc::common::packint::fixint<std::uint16_t>;
 using packer = srpc::common::packint::varint<std::size_t>;
-
-using namespace srpc::common;
-
-class string_to_int : public layer<std::string, int> {
-public:
-    void on_upper_data(std::string data) override
-    {
-        write_down(std::atol(data.c_str()));
-    }
-    void on_lower_data(int data) override {}
-};
-
-class mul_int : public layer<int, int> {
-    int f_;
-
-public:
-    mul_int(int f)
-        : f_(f) {};
-    void on_upper_data(int data) override
-    {
-        write_down(data * f_);
-    }
-    void on_lower_data(int data) override {}
-};
-
-class int_to_string : public layer<int, std::string> {
-public:
-    void on_upper_data(int data) override
-    {
-        // std::cout << data << "\n";
-        write_down(std::to_string(data));
-    }
-    void on_lower_data(std::string data) override {}
-};
-
-class printer : public layer<std::string, std::string> {
-public:
-    void on_upper_data(std::string data) override
-    {
-        std::cout << "'" << data << "'\n";
-        if (has_lower()) {
-            write_down(std::move(data));
-        }
-    }
-    void on_lower_data(std::string data) override
-    {
-        // std::cout << "'" << data << "'\n";
-        // write_down(std::to_string(data));
-    }
-};
 
 using namespace srpc::common;
 
@@ -90,17 +49,19 @@ public:
         };
 
         collector_.insert(collector_.end(), msg.begin(), msg.end());
-        std::size_t length = 0;
+
         auto next = PackerT::unpack(collector_.begin(), collector_.end());
         while (check(next)) {
             collector_.erase(collector_.begin(),
                              collector_.begin() + std::get<0>(next));
-            std::string ready(collector_.begin(),
-                              collector_.begin() + std::get<1>(next));
+            msg.assign(collector_.begin(),
+                       collector_.begin() + std::get<1>(next));
             collector_.erase(collector_.begin(),
                              collector_.begin() + std::get<1>(next));
+
             next = PackerT::unpack(collector_.begin(), collector_.end());
-            write_up(std::move(ready));
+
+            write_up(std::move(msg));
         }
     }
 
@@ -108,69 +69,246 @@ private:
     std::deque<char> collector_;
 };
 
-int main()
-{
-    string_to_int sti;
-    mul_int mi { 2 };
-    int_to_string its;
-    printer prt;
-
-    auto sss = make_layer_list(std::move(sti), std::move(mi), std::move(its),
-                               std::move(prt), printer {});
-
-    auto bbb = make_layer_list(unpacker_layer<packer> {});
-
-    std::string packed;
-
-    bbb.on_lower_ready_connect([&packed](auto msg) {
-        // std::cout << "ready to send: " << msg.size() << " bytes\n";
-        packed = std::move(msg);
-    });
-
-    bbb.on_upper_ready_connect([&packed](auto msg) {
-        // std::cout << "ready to receive: " << msg << "\n";
-        packed = std::move(msg);
-    });
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    packed = "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890"
-             "1234567890";
-
-    auto max = 1; // 0'000'000;
-
-    for (int i = 0; i < max; ++i) {
-        // bbb.write_upper("0123456789");
-        bbb.write_upper(std::move(packed));
-        bbb.write_lower(std::move(packed));
-        // bbb.write_lower({ packed.begin(), packed.end() });
-        // if (packed != "0123456789") {
-        //    throw std::runtime_error("FUUUUUUUUUU!");
-        //}
+class pass_layer : public layer<std::string, std::string> {
+    void on_upper_data(std::string msg)
+    {
+        write_down(std::move(msg));
     }
-    auto stop = std::chrono::high_resolution_clock::now();
+    void on_lower_data(std::string msg)
+    {
+        write_up(std::move(msg));
+    }
+};
 
-    auto time_work
-        = std::chrono::duration_cast<std::chrono::seconds>(stop - start)
-              .count();
+class echo_layer : public layer<std::string, std::string> {
+    void on_upper_data(std::string msg)
+    {
+        write_down(std::move(msg));
+    }
+    void on_lower_data(std::string msg)
+    {
+        write_down(std::move(msg));
+    }
+};
 
-    std::cout << time_work << "\n";
+class hello_layer_client : public layer<std::string, std::string> {
+    void on_upper_data(std::string msg) override
+    {
+        write_down(std::move(msg));
+    }
+    void on_lower_data(std::string msg) override
+    {
+        if (verified_ > 0) {
+            collector_.append(msg);
+            auto n = collector_.find('\n');
+            if (n != std::string::npos) {
+                std::cout << std::string { collector_.begin(),
+                                           collector_.begin() + n }
+                          << "\n";
+                verified_--;
+                if (0 == verified_) {
+                    write_up({ collector_.begin() + n + 1, collector_.end() });
+                } else {
+                    collector_
+                        = { collector_.begin() + n + 1, collector_.end() };
+                }
+            }
 
-    std::cout << (max * packed.size() / (time_work > 0 ? time_work : 1))
-              << " bytes in second \n";
-    std::cout << "packed size " << packed.size() << "\n";
+        } else {
+            write_up(std::move(msg));
+        }
+    }
+    int verified_ = 2;
+    std::string collector_;
+};
+
+class hello_layer_server : public layer<std::string, std::string> {
+public:
+    void on_upper_data(std::string msg) override
+    {
+        if (verified_) {
+            write_down(std::move(msg));
+        }
+    }
+
+    void on_lower_data(std::string msg) override
+    {
+        call_(std::move(msg));
+    }
+
+    void init()
+    {
+        call_ = [this](std::string msg) { hello(std::move(msg)); };
+        write_down("Hello there. Who are you?\r\n");
+    }
+
+    void hello(std::string msg)
+    {
+        collect_.append(msg);
+        if (collect_.find('\n') == std::string::npos) {
+            return;
+        }
+        auto f = collect_.find(':');
+        if (f == std::string::npos) {
+            write_down("try again!\r\n");
+            collect_.clear();
+            return;
+        }
+        std::string_view user { collect_.c_str(), f };
+        std::string_view password { collect_.c_str() + f + 1,
+                                    collect_.size() - f - 1 };
+
+        verified_ = true;
+        write_down("Welcome " + std::string { user.begin(), user.end() }
+                   + "\r\n");
+        collect_.clear();
+        call_ = [this](std::string msg) { pass(std::move(msg)); };
+    }
+
+    void pass(std::string msg)
+    {
+        write_up(std::move(msg));
+    };
+
+    std::function<void(std::string)> call_
+        = [this](std::string msg) { hello(std::move(msg)); };
+
+    std::string collect_;
+    bool verified_ = false;
+};
+
+template <typename Lt>
+void echo_thread_server(SOCKET s, Lt client)
+{
+    FD_SET read_ready;
+    std::string buf;
+    std::cout << "Echo thread begin\n";
+    client.on_lower_ready_connect(
+        [s](std::string msg) { send(s, msg.c_str(), msg.size(), 0); });
+    client.get<2>().init();
+    while (1) {
+        FD_ZERO(&read_ready);
+        FD_SET(s, &read_ready);
+        if (SOCKET_ERROR == select(1, &read_ready, nullptr, nullptr, nullptr)) {
+            return;
+        }
+        buf.resize(4096);
+        if (FD_ISSET(s, &read_ready)) {
+            int size = recv(s, &buf[0], buf.size(), 0);
+            if (size <= 0) {
+                break;
+            }
+            buf.resize(size);
+            client.write_lower(std::move(buf));
+        }
+    }
+    std::cout << "Echo thread end\n";
+}
+
+void start_server(std::uint16_t port)
+{
+    SOCKET ls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockaddr_in sai {};
+    sai.sin_family = AF_INET;
+    sai.sin_port = htons(port);
+    sai.sin_addr.s_addr = INADDR_ANY;
+
+    int opt = 1;
+    setsockopt(ls, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&opt),
+               sizeof(opt));
+    bind(ls, reinterpret_cast<sockaddr *>(&sai), sizeof(sai));
+    listen(ls, 10);
+    std::vector<std::thread> thread_list;
+    while (true) {
+        sockaddr_in rec {};
+        sai.sin_family = AF_INET;
+        int addrlen = sizeof(sai);
+        SOCKET s2 = accept(ls, reinterpret_cast<sockaddr *>(&rec), &addrlen);
+        auto lll = make_layer_list(echo_layer {}, unpacker_layer<packer> {},
+                                   hello_layer_server {});
+        thread_list.emplace_back(echo_thread_server<decltype(lll)>, s2,
+                                 std::move(lll));
+    }
+
+    for (auto &t : thread_list) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+}
+
+template <typename LayerT>
+void echo_client_thread(SOCKET s, LayerT &l)
+{
+    std::string data;
+    while (1) {
+        data.resize(4096);
+        int len = recv(s, data.data(), data.size(), 0);
+        if (len <= 0) {
+            break;
+        }
+        data.resize(len);
+        l.write_lower(std::move(data));
+    }
+}
+
+void start_client(std::uint16_t port)
+{
+    SOCKET ls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockaddr_in sai {};
+    sai.sin_family = AF_INET;
+    sai.sin_port = htons(port);
+    sai.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    std::string test = "1234567890";
+
+    auto layers = make_layer_list(pass_layer {}, unpacker_layer<packer> {},
+                                  hello_layer_client {});
+    layers.on_lower_ready_connect(
+        [ls](auto msg) { send(ls, msg.c_str(), msg.size(), 0); });
+    layers.on_upper_ready_connect([&test](auto msg) {
+        if (test != msg) {
+            std::cout << msg << "\n";
+        }
+    });
+
+    connect(ls, reinterpret_cast<sockaddr *>(&sai), sizeof(sai));
+    std::thread t(echo_client_thread<decltype(layers)>, ls, std::ref(layers));
+    send(ls, "f:f\n", 4, 0);
+
+    for (int i = 0; i < 1000000; ++i) {
+        layers.write_upper(test);
+    }
+    closesocket(ls);
+    // while (true) {
+    //    std::string data;
+    //    std::cin >> data;
+    //    layers.write_upper(std::move(data));
+    //}
+    if (t.joinable()) {
+        t.join();
+    }
+}
+
+int main(int arg, char *argv[])
+{
+#ifdef _WIN32
+    WSADATA wsad {};
+    if (SOCKET_ERROR == WSAStartup(0x0202, &wsad)) {
+        std::cerr << "Failed to init Socket. \n";
+        return 1;
+    }
+
+#endif
+
+    if (arg == 1) {
+        start_server(4949);
+    } else {
+        start_client(4949);
+    }
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
     return 0;
 }
