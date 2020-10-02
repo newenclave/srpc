@@ -34,3 +34,6 @@ include/srpc/common/protobuf/protocol/*.pb.*
 *.exe
 *.out
 *.app
+.kdev4*
+*.kdev4
+

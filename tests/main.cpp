@@ -14,11 +14,25 @@
 
 #ifdef _WIN32
 
-#include <WinSock2.h>
-#include <windows.h>
+#   include <WinSock2.h>
+#   include <windows.h>
 
-#pragma comment(lib, "ws2_32")
+#   pragma comment(lib, "ws2_32")
+
+using socklen_t = int;
+#else
+
+#   include <unistd.h>
+#   include <sys/types.h>
+#   include <sys/socket.h>
+#   include <netinet/in.h>
+#   include <arpa/inet.h>
+#   include <netdb.h>
+#   define  closesocket close
+#   define SOCKET_ERROR -1
+using SOCKET = int;
 #endif
+
 
 
 // using packer = srpc::common::packint::fixint<std::uint16_t>;
@@ -180,17 +194,17 @@ public:
 template <typename Lt>
 void echo_thread_server(SOCKET s, Lt client)
 {
-    FD_SET read_ready;
+    fd_set read_ready;
     std::string buf;
     std::cout << "Echo thread begin\n";
     client.on_lower_ready_connect(
         [s](std::string msg) { send(s, msg.c_str(), msg.size(), 0); });
-    client.get<2>().init();
+    client.template get<2>().init();
     while (1) {
         FD_ZERO(&read_ready);
         FD_SET(s, &read_ready);
-        if (SOCKET_ERROR == select(1, &read_ready, nullptr, nullptr, nullptr)) {
-            return;
+        if (SOCKET_ERROR == select(s + 1, &read_ready, nullptr, nullptr, nullptr)) {
+            break;
         }
         buf.resize(4096);
         if (FD_ISSET(s, &read_ready)) {
@@ -222,7 +236,7 @@ void start_server(std::uint16_t port)
     while (true) {
         sockaddr_in rec {};
         sai.sin_family = AF_INET;
-        int addrlen = sizeof(sai);
+        socklen_t addrlen = sizeof(sai);
         SOCKET s2 = accept(ls, reinterpret_cast<sockaddr *>(&rec), &addrlen);
         auto lll = make_layer_list(echo_layer {}, unpacker_layer<packer> {},
                                    hello_layer_server {});
@@ -250,6 +264,7 @@ void echo_client_thread(SOCKET s, LayerT &l)
         data.resize(len);
         l.write_lower(std::move(data));
     }
+    std::cout << "CLient thread exit\n";
 }
 
 void start_client(std::uint16_t port)
@@ -258,7 +273,7 @@ void start_client(std::uint16_t port)
     sockaddr_in sai {};
     sai.sin_family = AF_INET;
     sai.sin_port = htons(port);
-    sai.sin_addr.s_addr = inet_addr("127.0.0.1");
+    sai.sin_addr.s_addr = inet_addr("192.168.121.133");
 
     std::string test = "1234567890";
 
@@ -273,18 +288,18 @@ void start_client(std::uint16_t port)
     });
 
     connect(ls, reinterpret_cast<sockaddr *>(&sai), sizeof(sai));
+    int sent = send(ls, "f:f\n", 4, 0);
     std::thread t(echo_client_thread<decltype(layers)>, ls, std::ref(layers));
-    send(ls, "f:f\n", 4, 0);
+
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
 
     for (int i = 0; i < 1000000; ++i) {
         layers.write_upper(test);
     }
-    closesocket(ls);
-    // while (true) {
-    //    std::string data;
-    //    std::cin >> data;
-    //    layers.write_upper(std::move(data));
-    //}
+
+    shutdown(ls, SHUT_RDWR);
+    //closesocket(ls);
+
     if (t.joinable()) {
         t.join();
     }
@@ -298,7 +313,8 @@ int main(int arg, char *argv[])
         std::cerr << "Failed to init Socket. \n";
         return 1;
     }
-
+#else
+    signal(SIGPIPE, SIG_IGN);
 #endif
 
     if (arg == 1) {
