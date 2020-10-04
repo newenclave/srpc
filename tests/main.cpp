@@ -14,25 +14,24 @@
 
 #ifdef _WIN32
 
-#   include <WinSock2.h>
-#   include <windows.h>
+#include <WinSock2.h>
+#include <windows.h>
 
-#   pragma comment(lib, "ws2_32")
+#pragma comment(lib, "ws2_32")
 
 using socklen_t = int;
 #else
 
-#   include <unistd.h>
-#   include <sys/types.h>
-#   include <sys/socket.h>
-#   include <netinet/in.h>
-#   include <arpa/inet.h>
-#   include <netdb.h>
-#   define  closesocket close
-#   define SOCKET_ERROR -1
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#define closesocket close
+#define SOCKET_ERROR -1
 using SOCKET = int;
 #endif
-
 
 
 // using packer = srpc::common::packint::fixint<std::uint16_t>;
@@ -203,7 +202,8 @@ void echo_thread_server(SOCKET s, Lt client)
     while (1) {
         FD_ZERO(&read_ready);
         FD_SET(s, &read_ready);
-        if (SOCKET_ERROR == select(s + 1, &read_ready, nullptr, nullptr, nullptr)) {
+        if (SOCKET_ERROR
+            == select(s + 1, &read_ready, nullptr, nullptr, nullptr)) {
             break;
         }
         buf.resize(4096);
@@ -291,18 +291,25 @@ void start_client(std::uint16_t port)
     int sent = send(ls, "f:f\n", 4, 0);
     std::thread t(echo_client_thread<decltype(layers)>, ls, std::ref(layers));
 
-    //std::this_thread::sleep_for(std::chrono::seconds(1));
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
 
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 1000000; ++i) {
         layers.write_upper(test);
     }
 
     shutdown(ls, SHUT_RDWR);
-    //closesocket(ls);
+    closesocket(ls);
 
     if (t.joinable()) {
         t.join();
     }
+    auto stop = std::chrono::high_resolution_clock::now();
+    std::cout << "time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(stop
+                                                                       - start)
+                     .count()
+              << "\n";
 }
 
 int main(int arg, char *argv[])

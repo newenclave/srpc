@@ -36,4 +36,7 @@ include/srpc/common/protobuf/protocol/*.pb.*
 *.app
 .kdev4*
 *.kdev4
+CMakeLists.txt.user
+build/*
+
 

@@ -25,7 +25,7 @@ namespace srpc { namespace common {
     private:
         struct upper_slot_impl : public slot<UpperT> {
             upper_slot_impl() = default;
-            upper_slot_impl(upper_slot_impl &&) {}
+            upper_slot_impl(upper_slot_impl &&) { }
             upper_slot_impl &operator=(upper_slot_impl &&)
             {
                 return *this;
@@ -39,7 +39,7 @@ namespace srpc { namespace common {
 
         struct lower_slot_impl : public slot<LowerT> {
             lower_slot_impl() = default;
-            lower_slot_impl(lower_slot_impl &&) {}
+            lower_slot_impl(lower_slot_impl &&) { }
             lower_slot_impl &operator=(lower_slot_impl &&)
             {
                 return *this;
