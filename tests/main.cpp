@@ -28,6 +28,7 @@ using socklen_t = int;
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
 #define closesocket close
 #define SOCKET_ERROR -1
 using SOCKET = int;

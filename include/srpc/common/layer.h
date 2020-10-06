@@ -124,7 +124,6 @@ namespace srpc { namespace common {
             = delegate_slot<LowerT, layer, &layer::on_lower_data>;
 #endif
 
-
         slot<UpperT> *upper_ = nullptr;
         slot<LowerT> *lower_ = nullptr;
 
