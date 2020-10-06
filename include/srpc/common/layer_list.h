@@ -63,7 +63,6 @@ namespace srpc { namespace common {
         using lower_type = typename lower_layer::lower_type;
 
     private:
-        
         void translate_upper(upper_type msg)
         {
             on_upper_ready_(std::move(msg));
@@ -74,9 +73,11 @@ namespace srpc { namespace common {
             on_lower_ready_(std::move(msg));
         }
 
-        using upper_slot_impl = delegate_slot<upper_type, layer_list, &layer_list::translate_upper>;
-        using lower_slot_impl = delegate_slot<upper_type, layer_list, &layer_list::translate_lower>;
-        
+        using upper_slot_impl = delegate_slot<upper_type, layer_list,
+                                              &layer_list::translate_upper>;
+        using lower_slot_impl = delegate_slot<upper_type, layer_list,
+                                              &layer_list::translate_lower>;
+
     public:
         layer_list(const layer_list &) = delete;
         layer_list &operator=(const layer_list &) = delete;
@@ -103,7 +104,7 @@ namespace srpc { namespace common {
             on_upper_ready_ = std::move(other.on_upper_ready_);
         }
 
-        layer_list &operator = (layer_list &&other)
+        layer_list &operator=(layer_list &&other)
         {
             layers_ = std::move(other.layers_);
             connect_self();
