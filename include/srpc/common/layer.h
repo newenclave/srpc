@@ -14,42 +14,14 @@ namespace srpc { namespace common {
                   ^
              lower_slot
     */
-    template <typename UpperT, typename LowerT>
-    class layer;
+     template <typename UpperT, typename LowerT>
+     class layer;
 
     // template <typename... Args>
     // class layer_list;
 
     template <typename UpperT, typename LowerT>
     class layer {
-    private:
-        struct upper_slot_impl : public slot<UpperT> {
-            upper_slot_impl() = default;
-            upper_slot_impl(upper_slot_impl &&) { }
-            upper_slot_impl &operator=(upper_slot_impl &&)
-            {
-                return *this;
-            }
-            void write(UpperT msg) override
-            {
-                parent_->on_upper_data(std::move(msg));
-            }
-            layer *parent_ = nullptr;
-        };
-
-        struct lower_slot_impl : public slot<LowerT> {
-            lower_slot_impl() = default;
-            lower_slot_impl(lower_slot_impl &&) { }
-            lower_slot_impl &operator=(lower_slot_impl &&)
-            {
-                return *this;
-            }
-            void write(LowerT msg) override
-            {
-                parent_->on_lower_data(std::move(msg));
-            }
-            layer *parent_ = nullptr;
-        };
 
     public:
         using upper_type = UpperT;
@@ -58,29 +30,20 @@ namespace srpc { namespace common {
         virtual ~layer() = default;
 
         layer()
-        {
-            set_slots();
-        }
-
-        layer(layer &&other)
-        {
-            set_slots();
-        }
-
-        layer &operator=(layer &&other)
-        {
-            return *this;
-        }
-
-        layer(const layer &other)
-        {
-            set_slots();
-        }
-
-        layer &operator=(const layer &other)
-        {
-            return *this;
-        }
+            :upper_slot_(this)
+            ,lower_slot_(this)
+        {}
+        layer(layer &&) 
+            :upper_slot_(this)
+            ,lower_slot_(this)
+        {}
+        layer(const layer &) 
+            :upper_slot_(this)
+            ,lower_slot_(this)
+        {}
+        
+        layer &operator=(layer &&) = default;
+        layer &operator=(const layer &) = default;
 
         virtual void on_upper_data(UpperT mgs) = 0;
         virtual void on_lower_data(LowerT mgs) = 0;
@@ -127,14 +90,13 @@ namespace srpc { namespace common {
         }
 
     private:
+
+        using this_type = layer<UpperT, LowerT>;
+        using upper_slot_impl = delegate_slot<UpperT, this_type, &this_type::on_upper_data>;
+        using lower_slot_impl = delegate_slot<LowerT, this_type, &this_type::on_lower_data>;
+ 
         slot<UpperT> *upper_ = nullptr;
         slot<LowerT> *lower_ = nullptr;
-
-        void set_slots()
-        {
-            upper_slot_.parent_ = this;
-            lower_slot_.parent_ = this;
-        }
 
         upper_slot_impl upper_slot_;
         lower_slot_impl lower_slot_;

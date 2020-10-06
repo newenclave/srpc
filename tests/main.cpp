@@ -298,7 +298,7 @@ void start_client(std::uint16_t port)
         layers.write_upper(test);
     }
 
-    shutdown(ls, SHUT_RDWR);
+    shutdown(ls, 2);
     closesocket(ls);
 
     if (t.joinable()) {
