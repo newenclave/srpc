@@ -75,7 +75,7 @@ namespace srpc { namespace common {
 
         using upper_slot_impl = delegate_slot<upper_type, layer_list,
                                               &layer_list::translate_upper>;
-        using lower_slot_impl = delegate_slot<upper_type, layer_list,
+        using lower_slot_impl = delegate_slot<lower_type, layer_list,
                                               &layer_list::translate_lower>;
 
     public:
@@ -118,7 +118,7 @@ namespace srpc { namespace common {
             get<0>().upper_slot().write(std::move(msg));
         }
 
-        void write_lower(upper_type msg)
+        void write_lower(lower_type msg)
         {
             get<last_index>().lower_slot().write(std::move(msg));
         }

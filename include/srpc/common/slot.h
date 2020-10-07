@@ -7,6 +7,32 @@ namespace srpc { namespace common {
         virtual void write(T) = 0;
     };
 
+    template <typename T>
+    class function_slot : public slot<T> {
+    public:
+        template <typename... Args>
+        explicit function_slot(Args &&...params)
+            : call_(std::forward<Args>(params)...)
+        {
+        }
+        function_slot(function_slot &&) {}
+        function_slot(const function_slot &) {}
+        function_slot &operator=(function_slot &&)
+        {
+            return *this;
+        }
+        function_slot &operator=(const function_slot &)
+        {
+            return *this;
+        }
+        void write(T msg) override
+        {
+            call_(std::move(msg));
+        }
+    private:
+        std::function<void(T)> call_;
+    };
+
     template <typename T, typename ParentT, void (ParentT::*Call)(T)>
     class delegate_slot : public slot<T> {
     public:

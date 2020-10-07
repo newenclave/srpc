@@ -27,18 +27,18 @@ namespace srpc { namespace common {
         virtual ~layer() = default;
 
         layer()
-            : upper_slot_(this)
-            , lower_slot_(this)
+            : upper_slot_(
+                  [this](upper_type msg) { on_upper_data(std::move(msg)); })
+            , lower_slot_(
+                  [this](lower_type msg) { on_lower_data(std::move(msg)); })
         {
         }
         layer(layer &&)
-            : upper_slot_(this)
-            , lower_slot_(this)
+            : layer{}
         {
         }
         layer(const layer &)
-            : upper_slot_(this)
-            , lower_slot_(this)
+            : layer{}
         {
         }
 
@@ -92,37 +92,8 @@ namespace srpc { namespace common {
     private:
         // using this_type = layer<UpperT, LowerT>;
 
-#ifdef _MSC_VER
-        /// This hack is because VS has some bug here
-        // fatal error C1001: An internal error has occurred in the compiler.
-        // ...........
-        // 1>  CL!CloseTypeServerPDB() + 0xba88e
-        // 1 > CL!InvokeCompilerPassW() + 0x1d54d
-        template <void (layer::*Call)(UpperT)>
-        struct upper_layer_delegate
-            : public delegate_slot<UpperT, layer, Call> {
-            upper_layer_delegate(layer *p)
-                : delegate_slot(p)
-            {
-            }
-        };
-
-        template <void (layer::*Call)(LowerT)>
-        struct lower_layer_delegate
-            : public delegate_slot<LowerT, layer, Call> {
-            lower_layer_delegate(layer *p)
-                : delegate_slot(p)
-            {
-            }
-        };
-        using upper_slot_impl = upper_layer_delegate<&layer::on_upper_data>;
-        using lower_slot_impl = lower_layer_delegate<&layer::on_lower_data>;
-#else
-        using upper_slot_impl
-            = delegate_slot<UpperT, layer, &layer::on_upper_data>;
-        using lower_slot_impl
-            = delegate_slot<LowerT, layer, &layer::on_lower_data>;
-#endif
+        using upper_slot_impl = function_slot<UpperT>;
+        using lower_slot_impl = function_slot<UpperT>;
 
         slot<UpperT> *upper_ = nullptr;
         slot<LowerT> *lower_ = nullptr;
