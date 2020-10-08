@@ -13,12 +13,12 @@ namespace srpc { namespace common {
     class function_slot : public slot<T> {
     public:
         template <typename... Args>
-        explicit function_slot(Args &&...params)
+        explicit function_slot(Args &&... params)
             : call_(std::forward<Args>(params)...)
         {
         }
-        function_slot(function_slot &&) {}
-        function_slot(const function_slot &) {}
+        function_slot(function_slot &&) { }
+        function_slot(const function_slot &) { }
         function_slot &operator=(function_slot &&)
         {
             return *this;
@@ -31,6 +31,7 @@ namespace srpc { namespace common {
         {
             call_(std::move(msg));
         }
+
     private:
         std::function<void(T)> call_;
     };
@@ -42,8 +43,8 @@ namespace srpc { namespace common {
             : parent_(parent)
         {
         }
-        delegate_slot(delegate_slot &&) {}
-        delegate_slot(const delegate_slot &) {}
+        delegate_slot(delegate_slot &&) { }
+        delegate_slot(const delegate_slot &) { }
         delegate_slot &operator=(delegate_slot &&)
         {
             return *this;

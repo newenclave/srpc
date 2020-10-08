@@ -9,9 +9,9 @@
 
 #include "srpc/common/layer.h"
 #include "srpc/common/layer_list.h"
+#include "srpc/common/layers/pack_unpack.h"
 #include "srpc/common/packint/fixint.h"
 #include "srpc/common/packint/varint.h"
-#include "srpc/common/layers/pack_unpack.h"
 
 #ifdef _WIN32
 
@@ -26,10 +26,10 @@ using socklen_t = int;
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <signal.h>
 #define closesocket close
 #define SOCKET_ERROR -1
 using SOCKET = int;
@@ -130,10 +130,10 @@ void start_client(std::uint16_t port)
 
     connect(ls, reinterpret_cast<sockaddr *>(&sai), sizeof(sai));
     int sent = send(ls, "f:f\n", 4, 0);
-    
+
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 1000000; ++i) {
-        //layers.write_upper(test);
+        // layers.write_upper(test);
     }
 
     shutdown(ls, 2);

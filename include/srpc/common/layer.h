@@ -28,20 +28,20 @@ namespace srpc { namespace common {
 
         layer()
             : upper_slot_(
-                  [this](upper_type msg) { on_upper_data(std::move(msg)); })
+                [this](upper_type msg) { on_upper_data(std::move(msg)); })
             , lower_slot_(
                   [this](lower_type msg) { on_lower_data(std::move(msg)); })
         {
         }
         layer(layer &&)
-            : layer{}
+            : layer {}
         {
         }
         layer(const layer &)
-            : layer{}
+            : layer {}
         {
         }
-        layer &operator=(layer &&) 
+        layer &operator=(layer &&)
         {
             return *this;
         }
@@ -95,7 +95,6 @@ namespace srpc { namespace common {
         }
 
     private:
-
         using upper_slot_impl = function_slot<UpperT>;
         using lower_slot_impl = function_slot<LowerT>;
 
