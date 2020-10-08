@@ -41,9 +41,14 @@ namespace srpc { namespace common {
             : layer{}
         {
         }
-
-        layer &operator=(layer &&) = default;
-        layer &operator=(const layer &) = default;
+        layer &operator=(layer &&) 
+        {
+            return *this;
+        }
+        layer &operator=(const layer &)
+        {
+            return *this;
+        }
 
         virtual void on_upper_data(UpperT mgs) = 0;
         virtual void on_lower_data(LowerT mgs) = 0;
@@ -90,7 +95,6 @@ namespace srpc { namespace common {
         }
 
     private:
-        // using this_type = layer<UpperT, LowerT>;
 
         using upper_slot_impl = function_slot<UpperT>;
         using lower_slot_impl = function_slot<LowerT>;
