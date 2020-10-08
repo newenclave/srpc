@@ -139,6 +139,13 @@ namespace srpc { namespace common {
             on_lower_ready_ = std::move(val);
         }
 
+        void on_ready_connect(std::function<void(upper_type)> upper_data_cb, 
+                              std::function<void(lower_type)> lower_data_cb) 
+        {   
+            on_upper_ready_connect(std::move(upper_data_cb));
+            on_lower_ready_connect(std::move(lower_data_cb));
+        }
+        
     private:
         void connect_self()
         {

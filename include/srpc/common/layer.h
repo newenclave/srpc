@@ -93,7 +93,7 @@ namespace srpc { namespace common {
         // using this_type = layer<UpperT, LowerT>;
 
         using upper_slot_impl = function_slot<UpperT>;
-        using lower_slot_impl = function_slot<UpperT>;
+        using lower_slot_impl = function_slot<LowerT>;
 
         slot<UpperT> *upper_ = nullptr;
         slot<LowerT> *lower_ = nullptr;

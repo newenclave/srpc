@@ -313,8 +313,56 @@ void start_client(std::uint16_t port)
               << "\n";
 }
 
+namespace {
+    using namespace srpc::common;
+    class echo: public layer<std::string, int> {
+        void on_upper_data(std::string msg) override {
+            write_down(std::atoi(msg.c_str()));
+            write_up(std::move(msg));
+        }
+        void on_lower_data(int msg) override {
+            write_up(std::to_string(msg));
+            write_down(msg);            
+        }
+        
+    };
+    class i2f: public layer<int, float> {
+        void on_upper_data(int msg) {
+            write_down(msg);
+        }
+        void on_lower_data(float msg) {
+            write_up(msg);            
+        }
+    };
+    class f2c: public layer<float, std::string> {
+        void on_upper_data(float msg) override {
+            write_down(std::to_string(msg));
+        }
+        void on_lower_data(std::string msg) override {
+            write_up(std::atof(msg.c_str()));
+        } 
+    };
+}
+
 int main(int arg, char *argv[])
 {
+    auto layers = make_layer_list(echo{}, i2f{}, f2c{});
+    layers.on_ready_connect([](auto msg){
+        std::cout << "UL " << msg << "\n";
+    }, [](auto msg){
+        std::cout << "LL " << msg << "\n";
+    });
+    
+    std::string data;
+    layers.get<1>() = i2f{};
+    layers.write_lower(std::move(data));
+    
+    while(true) {
+        std::cin >> data;
+        layers.write_lower(std::move(data));
+    }
+    
+    return 0;
 #ifdef _WIN32
     WSADATA wsad {};
     if (SOCKET_ERROR == WSAStartup(0x0202, &wsad)) {
